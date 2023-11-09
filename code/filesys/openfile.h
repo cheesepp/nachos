@@ -24,6 +24,7 @@
 #include "utility.h"
 #include "sysdep.h"
 
+#define FILESYS_STUB
 #ifdef FILESYS_STUB // Temporarily implement calls to
 					// Nachos file system as calls to UNIX!
 					// See definitions listed under #else
@@ -90,6 +91,9 @@ public:
 		currentOffset = Tell(file);
 		return currentOffset;
 	}
+	
+	int GetFileID() { return file; }
+	int GetCurrentOffset() { return currentOffset; }
 
 private:
 	int file;
@@ -138,6 +142,10 @@ public:
 	{
 		return seekPosition;
 	}
+
+	
+	int GetFileID() { return file; }
+	int GetCurrentOffset() { return currentOffset; }
 
 private:
 	FileHeader *hdr;  // Header for this file

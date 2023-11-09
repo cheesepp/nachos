@@ -27,9 +27,12 @@
 #include "ksyscall.h"
 #include "stdint.h"
 #include "synchconsole.h"
+#include "file_descriptors.h"
 
 #define MaxFileLength 32
 #define MaxStringLength 256
+
+Table table;
 //----------------------------------------------------------------------
 // ExceptionHandler
 // 	Entry point into the Nachos kernel.  Called when a user program
@@ -57,6 +60,7 @@
 	Increase the program counter to point the next instruction
 	Copied from SC_Add
 */
+
 void increaseProgramCounter()
 {
 	/* set previous programm counter (debugging only)*/
@@ -67,6 +71,42 @@ void increaseProgramCounter()
 
 	/* set next programm counter for brach execution */
 	kernel->machine->WriteRegister(NextPCReg, kernel->machine->ReadRegister(NextPCReg) + 4);
+}
+
+// Send the data to the server and set the timeout of 20 seconds
+//! For advanced part, we don't use this function
+int SocketSend(char *buffer, int charCount, int fileId)
+{
+	int shortRetval = -1;
+	struct timeval tv;
+	tv.tv_sec = 20; /* 20 Secs Timeout */
+	tv.tv_usec = 0;
+	if (setsockopt(fileId, SOL_SOCKET, SO_SNDTIMEO, (char *)&tv, sizeof(tv)) < 0)
+	{
+		printf("Time Out\n");
+		return -1;
+	}
+	shortRetval = send(fileId, buffer, charCount, 0);
+
+	return shortRetval;
+}
+
+// receive the data from the server
+//! For advanced part, we don't use this function
+int SocketReceive(char *buffer, int charCount, int fileId)
+{
+	int shortRetval = -1;
+	struct timeval tv;
+	tv.tv_sec = 20; /* 20 Secs Timeout */
+	tv.tv_usec = 0;
+	if (setsockopt(fileId, SOL_SOCKET, SO_SNDTIMEO, (char *)&tv, sizeof(tv)) < 0)
+	{
+		printf("Time Out\n");
+		return -1;
+	}
+	shortRetval = recv(fileId, buffer, charCount, 0);
+	cout << "Response: " << buffer << endl;
+	return shortRetval;
 }
 
 // Code copied from file
@@ -84,12 +124,10 @@ char *User2System(int virtAddr, int limit)
 	if (kernelBuf == NULL)
 		return kernelBuf;
 	memset(kernelBuf, 0, limit + 1);
-	// printf("\n Filename u2s:");
 	for (i = 0; i < limit; i++)
 	{
 		kernel->machine->ReadMem(virtAddr + i, 1, &oneChar);
 		kernelBuf[i] = (char)oneChar;
-		// printf("%c",kernelBuf[i]);
 		if (oneChar == 0)
 			break;
 	}
@@ -121,6 +159,7 @@ int System2User(int virtAddr, int len, char *buffer)
 }
 
 #define MAX_NUM_LENGTH 11
+
 //-2147483648 <= int32 <=2147483647
 // so the maximum length of an int32 string is 11
 // A character buffer to read and write int32 number
@@ -318,14 +357,11 @@ void ExceptionHandler(ExceptionType which)
 
 	switch (which)
 	{
-		// Xử lý các exceptions được liệt kê trong machine / machine.h
-		// no exception sẽ trả quyền điều khiển về HĐH
+		// Handle exceptions listed in machine / machine.h
 	case NoException:
 		DEBUG(dbgSys, "No exception.\n");
 		return;
-		// Hầu hết các exception trong này là run - time errors
-		// khi các exception này xảy ra thì user program không thể được phục hồi
-		// HĐH hiển thị ra một thông báo lỗi và Halt hệ thống
+
 	case PageFaultException:
 		DEBUG(dbgSys, "No valid translation found.\n");
 		cerr << "No valid translation found. ExceptionType " << which << '\n';
@@ -376,7 +412,6 @@ void ExceptionHandler(ExceptionType which)
 		ASSERTNOTREACHED();
 		break;
 	case SyscallException:
-        DEBUG(dbgSys, "GO here!.\n");
 		switch (type)
 		{
 		case SC_Halt:
@@ -384,8 +419,6 @@ void ExceptionHandler(ExceptionType which)
 
 			SysHalt();
 
-			ASSERTNOTREACHED();
-			break;
 		case SC_Add:
 			DEBUG(dbgSys, "Add " << kernel->machine->ReadRegister(4) << " + " << kernel->machine->ReadRegister(5) << "\n");
 
@@ -402,36 +435,29 @@ void ExceptionHandler(ExceptionType which)
 			increaseProgramCounter();
 
 			return;
-			ASSERTNOTREACHED();
-			break;
+
 		case SC_Create:
 		{
+			// get address and file name
 			int virtAddr;
 			char *filename;
 			DEBUG(dbgSys, "\n SC_Create call ...");
 			DEBUG(dbgSys, "\n Reading virtual address of filename");
-			// Lấy tham số tên tập tin từ thanh ghi r4
+			// get params from register r4
 			virtAddr = kernel->machine->ReadRegister(4);
 			DEBUG(dbgSys, "\n Reading filename.");
-			// MaxFileLength là = 32
+			// MaxFileLength = 32
 			filename = User2System(virtAddr, MaxFileLength + 1);
 			if (filename == NULL)
 			{
 				printf("\n Not enough memory in system");
 				DEBUG(dbgSys, "\n Not enough memory in system");
-				kernel->machine->WriteRegister(2, -1); // trả về lỗi cho chương
-				// trình người dùng
+				kernel->machine->WriteRegister(2, -1); // return error to user program
 				delete filename;
 				return;
 			}
 			DEBUG(dbgSys, "\n Finish reading filename.");
-			// DEBUG(dbgSys,"\n File name : '"<<filename<<"'");
-			//  Create file with size = 0
-			//  Dùng đối tượng fileSystem của lớp OpenFile để tạo file,
-			//  việc tạo file này là sử dụng các thủ tục tạo file của hệ điều
-			//  hành Linux, chúng ta không quản ly trực tiếp các block trên
-			//  đĩa cứng cấp phát cho file, việc quản ly các block của file
-			//  trên ổ đĩa là một đồ án khác
+			// If can not create file
 			if (!kernel->fileSystem->Create(filename))
 			{
 				printf("\n Error create file '%s'", filename);
@@ -439,125 +465,101 @@ void ExceptionHandler(ExceptionType which)
 				delete filename;
 				return;
 			}
-			kernel->machine->WriteRegister(2, 0); // trả về cho chương trình
-												  // người dùng thành công
+			kernel->machine->WriteRegister(2, 0); // successed -> return 0 to user
 			delete filename;
-			break;
+			increaseProgramCounter();
+			return;
 		}
 
 		case SC_Open:
 		{
-			// Input: arg1: Dia chi cua chuoi name, arg2: type
-			// Output: Tra ve OpenFileID neu thanh, -1 neu loi
-			// Chuc nang: Tra ve ID cua file.
-	 
-			//OpenFileID Open(char *name, int type)
-            DEBUG(dbgSys, "GO Open!\n");
-			int virtAddr = kernel->machine->ReadRegister(4); // Lay dia chi cua tham so name tu thanh ghi so 4
-			int type = kernel->machine->ReadRegister(5); // Lay tham so type tu thanh ghi so 5
-			char* filename;
-			filename = User2System(virtAddr, MaxFileLength); // Copy chuoi tu vung nho User Space sang System Space voi bo dem name dai MaxFileLength
-			//Kiem tra xem OS con mo dc file khong
-			
-			// update 4/1/2018
-			int freeSlot = kernel->fileSystem->FindFreeSlot();
-			if (freeSlot != -1) //Chi xu li khi con slot trong
+			DEBUG(dbgSys, "GO Open!\n");
+			int virtAddr = kernel->machine->ReadRegister(4);
+			int type = kernel->machine->ReadRegister(5);
+			char *filename;
+			filename = User2System(virtAddr, MaxFileLength);
+
+			if (type == 0 || type == 1) // execute when type = 0 or = 1
 			{
-				if (type == 0 || type == 1) //chi xu li khi type = 0 hoac 1
+				int openFileId = table.open(filename, type);
+
+				if (openFileId != -1) // Open file successfully
 				{
-					DEBUG(dbgSys, "GO ENd 1!\n");
-                    kernel->fileSystem->openf[freeSlot] = kernel->fileSystem->Open(filename, type);
-                    DEBUG(dbgSys, "Check " << kernel->fileSystem->openf[freeSlot] << endl);
-					if (kernel->fileSystem->openf[freeSlot] != NULL) //Mo file thanh cong
-					{
-                        DEBUG(dbgSys, "\nOpened file");
-						kernel->machine->WriteRegister(2, freeSlot); //tra ve OpenFileID
-					}
+					DEBUG(dbgSys, "\nOpened file");
+					kernel->machine->WriteRegister(2, openFileId); // return OpenFileID
+					delete[] filename;
+					increaseProgramCounter();
+					return;
+					ASSERTNOTREACHED();
+					break;
 				}
-				else if (type == 2) // xu li stdin voi type quy uoc la 2
-				{
-                    DEBUG(dbgSys, "GO ENd 3!\n");
-					kernel->machine->WriteRegister(2, 0); //tra ve OpenFileID
-				}
-				else // xu li stdout voi type quy uoc la 3
-				{
-                    DEBUG(dbgSys, "GO ENd 4!\n");
-					kernel->machine->WriteRegister(2, 1); //tra ve OpenFileID
-				}
-				delete[] filename;
-				break;
 			}
-			kernel->machine->WriteRegister(2, -1); //Khong mo duoc file return -1
-			DEBUG(dbgSys, "GO ENd!\n");
+			kernel->machine->WriteRegister(2, -1); // Can not open file
 			delete[] filename;
 			increaseProgramCounter();
-
 			return;
-			ASSERTNOTREACHED();
-			break;
 		}
 
 		case SC_Close:
 		{
-			// int id = kernel->machine->ReadRegister(4);
-    		// kernel->machine->WriteRegister(2, kernel->fileSystem->Close(id));
-			// increaseProgramCounter();
 
-			// return;
-			// ASSERTNOTREACHED();
-			// break;
-
-				//Input id cua file(OpenFileID)
-			// Output: 0: thanh cong, -1 that bai
-			int fid = kernel->machine->ReadRegister(4); // Lay id cua file tu thanh ghi so 4
-			if (fid >= 0 && fid <= 14) //Chi xu li khi fid nam trong [0, 14]
+			int fid = kernel->machine->ReadRegister(4);
+			if (table.isOpened(fid)) // if open file successfully
 			{
-				if (kernel->fileSystem->openf[fid]) //neu mo file thanh cong
+				for (int i = 0; i < 20; i++)
 				{
-					delete kernel->fileSystem->openf[fid]; //Xoa vung nho luu tru file
-					kernel->fileSystem->openf[fid] = NULL; //Gan vung nho NULL
-					kernel->machine->WriteRegister(2, 0);
-					break;
+					if (table.table[i].getID() == fid)
+					{
+						table.table[i].CloseFile();
+						break;
+					}
 				}
+				kernel->machine->WriteRegister(2, 0);
+				increaseProgramCounter();
+
+				return;
 			}
+			DEBUG(dbgSys, "Closed file!\n");
 			kernel->machine->WriteRegister(2, -1);
 			increaseProgramCounter();
 
 			return;
-			ASSERTNOTREACHED();
-			break;
 		}
-
-		case SC_ReadNum:
+		case SC_Remove:
 		{
-			// Đọc số từ console vào num
-			int num = ReadNumFromConsole();
-			// Ghi vào thanh ghi số 2
-			kernel->machine->WriteRegister(2, num);
+			int virtAddr = kernel->machine->ReadRegister(4);
+			// get string from User Space to System Space with MaxFileLength
+			char *filename = User2System(virtAddr, MaxFileLength);
+
+			// Handle excetion when openfile
+			OpenFileId isOpen = table.isOpened(filename, 0);
+
+			if (isOpen > -1)
+			{
+				table.closeFile(isOpen);
+				increaseProgramCounter();
+				return;
+			}
+
+			isOpen = table.isOpened(filename, 1);
+
+			if (isOpen > -1)
+			{
+
+				table.closeFile(isOpen);
+				increaseProgramCounter();
+				return;
+			}
+
+			kernel->machine->WriteRegister(2, kernel->fileSystem->Remove(filename) ? 0 : -1);
 
 			increaseProgramCounter();
-
 			return;
-			ASSERTNOTREACHED();
-			break;
-		}
-		case SC_PrintNum:
-		{
-			// Lấy tham số cần in từ thanh ghi r4
-			int num = kernel->machine->ReadRegister(4);
-			// In ra console
-			PrintNumToConsole(num);
-
-			increaseProgramCounter();
-
-			return;
-			ASSERTNOTREACHED();
-			break;
 		}
 
 		case SC_ReadChar:
 		{
-			//Đọc character từ console và ghi vào thanh ghi số 2
+			// Đọc character từ console và ghi vào thanh ghi số 2
 			char character = ReadCharFromConsole();
 			kernel->machine->WriteRegister(2, (int)character);
 
@@ -566,11 +568,12 @@ void ExceptionHandler(ExceptionType which)
 			ASSERTNOTREACHED();
 			break;
 		}
+		
 		case SC_PrintChar:
 		{
 			// Lấy tham số cần in từ thanh ghi r4
 			char character = (char)kernel->machine->ReadRegister(4);
-			//In ra console
+			// In ra console
 			PrintCharToConsole(character);
 
 			increaseProgramCounter();
@@ -582,14 +585,14 @@ void ExceptionHandler(ExceptionType which)
 
 		case SC_ReadString:
 		{
-			//Đọc địa chỉ string từ thanh ghi r4
+			// Đọc địa chỉ string từ thanh ghi r4
 			int userString = kernel->machine->ReadRegister(4);
-			//Đọc chiều dài string từ thanh ghi r5
+			// Đọc chiều dài string từ thanh ghi r5
 			int len = kernel->machine->ReadRegister(5);
 
 			if (len > MaxStringLength || len < 1)
 			{
-				DEBUG(dbgSys, "String length must be between 1 and " << MaxStringLength<< " (inclusive)\n");
+				DEBUG(dbgSys, "String length must be between 1 and " << MaxStringLength << " (inclusive)\n");
 				SysHalt();
 			}
 			DEBUG(dbgSys, "String length: " << len);
@@ -605,9 +608,10 @@ void ExceptionHandler(ExceptionType which)
 			ASSERTNOTREACHED();
 			break;
 		}
+		
 		case SC_PrintString:
 		{
-			//Đọc địa chỉ string từ thanh ghi r4
+			// Đọc địa chỉ string từ thanh ghi r4
 			int userString = kernel->machine->ReadRegister(4);
 
 			// Chuyển dữ liệu từ userspace qua kernelspace
@@ -624,6 +628,235 @@ void ExceptionHandler(ExceptionType which)
 			break;
 		}
 
+
+		case SC_Read:
+		{
+			DEBUG(dbgSys, "Go read file!\n");
+			// get buffer from register 4
+			int virtAddr = kernel->machine->ReadRegister(4);
+			// get char count from register 5
+			int charCount = kernel->machine->ReadRegister(5);
+			// copy memory from User Space to System Space with buffer has length charCount
+			char *buff = User2System(virtAddr, charCount);
+			// get file id from register 6
+			int id = kernel->machine->ReadRegister(6);
+
+			DEBUG(dbgSys, "Read " << charCount << " chars from file " << id << "\n");
+
+			// if ((id < 0) || (id > 19))
+			// {
+			// 	kernel->machine->WriteRegister(2, -1);
+			// 	DEBUG(dbgSys, "E: ID is not in table file descriptor\n");
+			// 	increaseProgramCounter();
+			// 	return;
+			// 	ASSERTNOTREACHED();
+			// 	break;
+			// }
+
+			// file id < 0 -> return error
+			if (id < 0)
+			{
+				kernel->machine->WriteRegister(2, -1);
+			}
+			// id = 0 -> read from console
+			if (id == SysConsoleInput)
+			{
+				kernel->machine->WriteRegister(2, kernel->synchConsoleIn->GetString(buff, charCount));
+			}
+			// can not get file id -> return error
+			if (!table.getFile(id))
+			{
+				kernel->machine->WriteRegister(2, -1);
+			}
+			else
+			{
+				// successed -> read file
+				kernel->machine->WriteRegister(2, table.getFile(id)->ReadFile(buff, charCount));
+			}
+			DEBUG(dbgSys, "Read "
+							  << "file successfully"
+							  << "\n");
+			// Copy chuoi tu vung nho System Space sang User Space voi bo dem buffer dai charCount
+			System2User(virtAddr, charCount, buff);
+			delete[] buff;
+
+			increaseProgramCounter();
+			return;
+		}
+
+		case SC_Write:
+		{
+			DEBUG(dbgSys, "Write file!\n");
+			int virtAddr = kernel->machine->ReadRegister(4);
+			int charCount = kernel->machine->ReadRegister(5);
+			int id = kernel->machine->ReadRegister(6);
+			char *buffer = User2System(virtAddr, charCount);
+
+			// if ((id < 0) || (id > 19))
+			// {
+			// 	kernel->machine->WriteRegister(2, -1);
+			// 	DEBUG(dbgSys, "E: ID is not in table file descriptor\n");
+			// 	increaseProgramCounter();
+			// 	return;
+			// 	ASSERTNOTREACHED();
+			// 	break;
+			// }
+			// id = 1 then print on console
+			if (id == SysConsoleOutput)
+			{
+				DEBUG(dbgSys, "ConsoleOutput\n");
+				kernel->machine->WriteRegister(2, kernel->synchConsoleOut->PutString(buffer, charCount));
+				increaseProgramCounter();
+				return;
+			}
+			// can not get file -> return error
+			if (!table.getFile(id))
+			{
+				DEBUG(dbgSys, "E: File is not existed\n");
+				kernel->machine->WriteRegister(2, -1);
+				increaseProgramCounter();
+				return;
+			}
+
+			// not read only -> read and write
+			if (id != 1)
+			{
+				// get file successfully -> return writefile to result or -1 if can not get file
+				int result = (table.getFile(id) != NULL ? table.getFile(id)->WriteFile(buffer, charCount) : -1);
+				if (result == -1)
+				{
+					cout << "Cannot Write\n";
+				}
+				// write result to register
+				kernel->machine->WriteRegister(2, result);
+				increaseProgramCounter();
+				return;
+			}
+
+			// return error if no condition is matched
+			kernel->machine->WriteRegister(2, -1);
+			// copy memory from System Space to User Space with buffer has length charCount
+			System2User(virtAddr, charCount, buffer);
+			// release buffer memory
+			delete[] buffer;
+
+			increaseProgramCounter();
+			return;
+		}
+
+		case SC_Seek:
+		{
+			// get position and file id
+			int pos = kernel->machine->ReadRegister(4);
+			int id = kernel->machine->ReadRegister(5);
+
+			// if id for console input and output -> return error
+			if (id == 0 || id == 1)
+			{
+
+				kernel->machine->WriteRegister(2, -1);
+				increaseProgramCounter();
+				return;
+			}
+			// can not get file id -> return errro
+			if (!table.getFile(id))
+			{
+				kernel->machine->WriteRegister(2, -1);
+				increaseProgramCounter();
+				return;
+			}
+			DEBUG(dbgSys, "go seek!\n");
+			// get file successed -> write file offset to register
+			kernel->machine->WriteRegister(2, table.getFile(id)->getOffset());
+			// seek with position in file
+			int result = table.getFile(id)->seekFile(pos);
+			cout << "Seeking to: " << result << endl;
+
+			increaseProgramCounter();
+			return;
+		}
+
+		case SC_Connect:
+		{
+			DEBUG(dbgSys, "Connect file!\n");
+			int arg1 = kernel->machine->ReadRegister(4); // socketid
+			int arg2 = kernel->machine->ReadRegister(5); // ip
+			int arg3 = kernel->machine->ReadRegister(6); // port
+
+			// convert the IP address from user space to kernel space
+			char *kernelIP = new char[MaxStringLength];
+			copyStringFromMachine(arg2, kernelIP, MaxStringLength);
+
+			if (table.getFile(arg1)->connectSocket(kernelIP, arg3) < 0)
+			{
+				DEBUG(dbgSys, "Connection failed!\n");
+				return;
+			}
+
+			// set the return value
+			kernel->machine->WriteRegister(2, arg1);
+
+			delete[] kernelIP;
+			increaseProgramCounter();
+			return;
+		}
+
+		case SC_SocketTCP:
+		{
+			DEBUG(dbgSys, "Create socket!\n");
+			// create socket
+			int fileid = table.open(NULL, SOCKET_MODE);
+			DEBUG(dbgSys, "Open " << fileid << " socket file!\n");
+			// write file id to register
+			kernel->machine->WriteRegister(2, fileid);
+
+			increaseProgramCounter();
+			return;
+		}
+
+		case SC_Send:
+		{
+			DEBUG(dbgSys, "Send message socket!\n");
+			int addrSocketid = kernel->machine->ReadRegister(4);
+			int idbuffer = kernel->machine->ReadRegister(5);
+			int len = kernel->machine->ReadRegister(6);
+
+			// get file id of socket
+			int socketid = table.getFile(addrSocketid)->getSocketID();
+			// create buffer array
+			char *buffer = new char[len];
+			// copy memory of id buffer from user space to system space and save to buffer
+			buffer = User2System(idbuffer, len);
+			// send socket
+			SocketSend(buffer, len, socketid);
+
+			DEBUG(dbgSys, "Send mess successfully!\n");
+			increaseProgramCounter();
+			return;
+		}
+
+		case SC_Receive:
+		{
+			DEBUG(dbgSys, "Receive message socket!\n");
+			int addrSocketid = kernel->machine->ReadRegister(4);
+			int idbuffer = kernel->machine->ReadRegister(5);
+			int len = kernel->machine->ReadRegister(6);
+
+			cout << "Address Socket Id: " << addrSocketid << endl;
+			// get socket file id
+			int socketid = table.getFile(addrSocketid)->getSocketID();
+			cout << "Socket Id: " << socketid << endl;
+			char *buffer = new char[len];
+			// receive message and save to buffer
+			SocketReceive(buffer, len, socketid);
+			// copy memory from system space to user space and save to id buffer
+			System2User(idbuffer, len, buffer);
+			DEBUG(dbgSys, "Receive mess successfully!\n");
+
+			increaseProgramCounter();
+			return;
+		}
+
 		default:
 			cerr << "Unexpected system call " << type << "\n";
 			break;
@@ -633,5 +866,6 @@ void ExceptionHandler(ExceptionType which)
 		cerr << "Unexpected user mode exception" << (int)which << "\n";
 		break;
 	}
+	DEBUG(dbgSys, "hehe\n");
 	ASSERTNOTREACHED();
 }

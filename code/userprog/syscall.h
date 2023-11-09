@@ -44,6 +44,12 @@
 #define SC_ReadString 206
 #define SC_PrintString 207
 
+#define SC_SocketTCP    100
+#define SC_Connect      101
+#define SC_Send 102
+#define SC_Receive 103
+
+
 #ifndef IN_ASM
 
 /* The system call interface.  These are the operations the Nachos
@@ -59,24 +65,6 @@
 /* Stop Nachos, and print out performance stats */
 void Halt();		
  
- 
-/*
- * Add the two operants and return the result
- */ 
-
-int Add(int op1, int op2);
-
-
-/*
- * Read 1 number from console
- */
-int ReadNum();
-
-/*
- * Print 1 number to console
- */
-void PrintNum(int num);
-
 /*
  * Read 1 character from console
  */
@@ -102,6 +90,12 @@ void ReadString(char* buffer, int length);
  */
 void PrintString(char* buffer);
 
+ 
+/*
+ * Add the two operants and return the result
+ */ 
+
+int Add(int op1, int op2);
 /* Address space control operations: Exit, Exec, Execv, and Join */
 
 /* This user program is done (status = 0 means exited normally). */
@@ -219,6 +213,26 @@ int ThreadJoin(ThreadId id);
  * Deletes current thread and returns ExitCode to every waiting lokal thread.
  */
 void ThreadExit(int ExitCode);	
+
+// Open a socket and return socket ID
+OpenFileId SocketTCP(); 
+
+//Connect a socket to a server with IP and Port 8080
+int Connect(int socketid, char *ip, int port); 
+
+void Send(int socketid, char* buffer, int len);
+void Receive(int socketid, char* buffer, int len);
+
+int len(char *str)
+{
+    int len = 0;
+    while (*str != '\0')
+    {
+        str++;
+        len++;
+    }
+    return len;
+}
 
 #endif /* IN_ASM */
 
