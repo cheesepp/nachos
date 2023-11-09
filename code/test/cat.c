@@ -7,10 +7,9 @@ int main() {
     int id;
     char buffer[256];
 
-    id = Open("text.txt", 1);
+    id = Open("text.txt", 0);
     Read(buffer,256, id);
-    Write(buffer, len(buffer),CONSOLE_OUTPUT);
+    Write(buffer,len(buffer),CONSOLE_OUTPUT);
     Close(id);
-
     Halt();
 }

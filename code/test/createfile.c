@@ -15,10 +15,5 @@ int main()
         // xuất thông báo tạo tập tin thành công
        
     }
-
-    
-    int result;
-  
-    result = Add(42, 23);
     Halt();
 }

@@ -112,7 +112,7 @@ ifeq ($(hosttype),unknown)
 PROGRAMS = unknownhost
 else
 # change this if you create a new test program!
-PROGRAMS = add halt shell matmult sort segments createfile openf
+PROGRAMS = add halt shell matmult sort segments createfile openf cat echoclient fileclient copy concatenate delete
 endif
 
 all: $(PROGRAMS)
@@ -169,12 +169,49 @@ openf: openf.o start.o
 	$(LD) $(LDFLAGS) start.o openf.o -o openf.coff
 	$(COFF2NOFF) openf.coff openf
 
+cat.o: cat.c
+	$(CC) $(CFLAGS) -c cat.c
+cat: cat.o start.o
+	$(LD) $(LDFLAGS) start.o cat.o -o cat.coff
+	$(COFF2NOFF) cat.coff cat
+
+echoclient.o: echoclient.c
+	$(CC) $(CFLAGS) -c echoclient.c
+echoclient: echoclient.o start.o
+	$(LD) $(LDFLAGS) start.o echoclient.o -o echoclient.coff
+	$(COFF2NOFF) echoclient.coff echoclient	
+
+fileclient.o: fileclient.c
+	$(CC) $(CFLAGS) -c fileclient.c
+fileclient: fileclient.o start.o
+	$(LD) $(LDFLAGS) start.o fileclient.o -o fileclient.coff
+	$(COFF2NOFF) fileclient.coff fileclient
+
+copy.o: copy.c
+	$(CC) $(CFLAGS) -c copy.c
+copy: copy.o start.o
+	$(LD) $(LDFLAGS) start.o copy.o -o copy.coff
+	$(COFF2NOFF) copy.coff copy
+
+concatenate.o: concatenate.c
+	$(CC) $(CFLAGS) -c concatenate.c
+concatenate: concatenate.o start.o
+	$(LD) $(LDFLAGS) start.o concatenate.o -o concatenate.coff
+	$(COFF2NOFF) concatenate.coff concatenate
+
+delete.o: delete.c
+	$(CC) $(CFLAGS) -c delete.c
+delete: delete.o start.o
+	$(LD) $(LDFLAGS) start.o delete.o -o delete.coff
+	$(COFF2NOFF) delete.coff delete
+
 clean:
 	$(RM) -f *.o *.ii
 	$(RM) -f *.coff
 
 distclean: clean
 	$(RM) -f $(PROGRAMS)
+
 
 unknownhost:
 	@echo Host type could not be determined.
