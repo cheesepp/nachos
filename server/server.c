@@ -37,17 +37,17 @@ void func(int connfd)
 		// read the message from client and copy it in buffer
 		read(connfd, buff, sizeof(buff));
 		// print buffer which contains the client contents
-		printf("From client: %s\t To client : ", buff);
+		printf("\nFrom client: %s", buff);
 		//bzero(buff, MAX);
 		//n = 0;
 		// copy server message in the buffer and uppercase them
 		stringUpr(buff);
-
+		printf("\nTo Client: %s",buff);
 		// and send that buffer to client
 		write(connfd, buff, sizeof(buff));
 
 		// if msg contains "Exit" then server exit and chat ended.
-		if (strncmp("exit", buff, 4) == 0)
+		if (strncmp("EXIT", buff, 5) == 0)
 		{
 			printf("Server Exit...\n");
 			break;
@@ -59,7 +59,7 @@ void func(int connfd)
 int main()
 {
 	int sockfd, connfd;
-    socklen_t len;
+	socklen_t len;
 	struct sockaddr_in servaddr, cli;
 
 	// socket create and verification
@@ -94,22 +94,22 @@ int main()
 	}
 	else
 		printf("Server listening on port 8081...\n");
-	
-    len = sizeof(cli);
 
-	// Accept the data packet from client and verification
-	connfd = accept(sockfd, (SA *)&cli, &len);
-	if (connfd < 0)
-	{
-		printf("server accept failed...\n");
-		exit(0);
+	while (1) { // Loop to accept multiple clients
+		len = sizeof(cli);
+		// Accept the data packet from client and verification
+		connfd = accept(sockfd, (SA *)&cli, &len);
+		if (connfd < 0)
+		{
+			printf("server accept failed...\n");
+			exit(0);
+		}
+		else
+			printf("server accept the client...\n");
+
+		// Function for chatting between client and server
+		func(connfd);
+		close(connfd); // Close the connection for this client
 	}
-	else
-		printf("server accept the client...\n");
-
-	// Function for chatting between client and server
-	func(connfd);
-
-	// After chatting close the socket
-	close(sockfd);
+	close(sockfd); // Close the server socket
 }

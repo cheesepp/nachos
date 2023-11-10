@@ -105,7 +105,7 @@ public:
         {
             this->myFile.name = name;
             this->type = type;
-            this->id = fid;
+            this->id = (type*100) + fid;
             this->myFile.currentOffset = 0; // Filesystem Object sets Offset = 0 as default
             return id;
         }
@@ -125,7 +125,7 @@ public:
 
         this->mySocket.socketID = sockfd;
         this->type = SOCKET_MODE;
-        this->id = this->mySocket.socketID;
+        this->id = SOCKET_MODE * 100 + this->mySocket.socketID;
         return this->mySocket.socketID;
     }
 

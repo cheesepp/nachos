@@ -105,7 +105,7 @@ int SocketReceive(char *buffer, int charCount, int fileId)
 		return -1;
 	}
 	shortRetval = recv(fileId, buffer, charCount, 0);
-	cout << "Response: " << buffer << endl;
+	cout << "Response: " << buffer << "(" << charCount << ")" << endl;
 	return shortRetval;
 }
 
@@ -719,7 +719,7 @@ void ExceptionHandler(ExceptionType which)
 			}
 
 			// not read only -> read and write
-			if (id != 1)
+			if (id / 100 != 1)
 			{
 				// get file successfully -> return writefile to result or -1 if can not get file
 				int result = (table.getFile(id) != NULL ? table.getFile(id)->WriteFile(buffer, charCount) : -1);
@@ -833,6 +833,7 @@ void ExceptionHandler(ExceptionType which)
 			DEBUG(dbgSys, "Send mess successfully!\n");
 			increaseProgramCounter();
 			return;
+			ASSERTNOTREACHED();
 		}
 
 		case SC_Receive:
@@ -855,6 +856,7 @@ void ExceptionHandler(ExceptionType which)
 
 			increaseProgramCounter();
 			return;
+			ASSERTNOTREACHED();
 		}
 
 		default:

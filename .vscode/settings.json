@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "atomic": "cpp",
+        "*.tcc": "cpp",
+        "fstream": "cpp",
+        "sstream": "cpp",
+        "syscall.h": "c",
+        "iostream": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "enabled"
+}
