@@ -5,7 +5,8 @@
         "fstream": "cpp",
         "sstream": "cpp",
         "syscall.h": "c",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "ostream": "cpp"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

@@ -171,20 +171,20 @@ public:
 
         if (this->type == 1) // if read only -> invalid
         {
-            cout << "INVALID MODE!\n";
+            cout << "Not read write type!\n";
             return -1;
         }
 
         if (!this->myFile.FilePointer)
         {
-            cout << "File doesn't exist!\n";
+            cout << "Can not find file!\n";
             return -1;
         }
         
         result = this->myFile.FilePointer->WriteAt(buffer, charCount, myFile.FilePointer->Length() + 1);
 
         if (result != charCount)
-            return -2;
+            return -1;
         cout << "Written success!\n";
         return result;
     }

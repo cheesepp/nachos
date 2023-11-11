@@ -766,11 +766,11 @@ void ExceptionHandler(ExceptionType which)
 				return;
 			}
 			DEBUG(dbgSys, "go seek!\n");
-			// get file successed -> write file offset to register
-			kernel->machine->WriteRegister(2, table.getFile(id)->getOffset());
 			// seek with position in file
 			int result = table.getFile(id)->seekFile(pos);
 			cout << "Seeking to: " << result << endl;
+			// get file successed -> write file offset to register
+			kernel->machine->WriteRegister(2, table.getFile(id)->getOffset());
 
 			increaseProgramCounter();
 			return;
