@@ -1,19 +1,24 @@
 #include "syscall.h"
 
+#define MAX_LENGTH 32
 #define CONSOLE_INPUT 0
 #define CONSOLE_OUTPUT 1
 
 int main() {
     int res, id;
-    
-    res = Remove("text1.txt");
+    char filename[MAX_LENGTH];
+
+    Write("Nhap ten file can xoa\n",30,CONSOLE_OUTPUT);
+	ReadString(filename, MAX_LENGTH); // call ReadString to read the source file
+	
+    res = Remove(filename);
     if (res == -1)
     {
-        Write("Delete Failed\n",16,CONSOLE_OUTPUT);
+        Write("Khong the xoa file! \n",30,CONSOLE_OUTPUT);
     }
     else
     {
-        Write("Success",8,CONSOLE_OUTPUT);
+        Write("Xoa file thanh cong!",30,CONSOLE_OUTPUT);
     }
     Halt();
 }

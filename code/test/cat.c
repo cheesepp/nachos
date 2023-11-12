@@ -27,6 +27,7 @@ int main() {
         // print string
 		PrintString("Noi dung file:\n");
 		PrintString(buffer);
+		PrintString("\n");
 		Close(openFileId); // Close file
 	}
 	else

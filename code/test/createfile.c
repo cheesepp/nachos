@@ -6,13 +6,13 @@ int main()
     int len;
     char filename[maxlen + 1];
     /*Create a file*/
-    if (Create("text.txt") == -1)
+    if (Create("text8.txt") == -1)
     {
-        // xuất thông báo lỗi tạo tập tin
+        PrintString("Tao file that bai!\n\n");
     }
     else
     {
-        // xuất thông báo tạo tập tin thành công
+        PrintString("Tao file thanh cong!\n\n");
        
     }
     Halt();

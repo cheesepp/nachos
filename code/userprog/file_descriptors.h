@@ -185,7 +185,6 @@ public:
 
         if (result != charCount)
             return -1;
-        cout << "Written success!\n";
         return result;
     }
 
@@ -194,11 +193,9 @@ public:
         if (this->type == SOCKET_MODE)
             return -1;
         if (position >= myFile.FilePointer->Length()) {
-            cout << "vao file pointer!";
             return -1;
         }
         if (position == -1) {
-            cout << "vao seek!";
             return myFile.FilePointer->Seek(myFile.FilePointer->Length());
         }
         return myFile.FilePointer->Seek(position);
