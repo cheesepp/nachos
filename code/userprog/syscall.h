@@ -43,6 +43,7 @@
 #define SC_RandomNum 205
 #define SC_ReadString 206
 #define SC_PrintString 207
+#define SC_CreateSemaphore 208
 
 #define SC_SocketTCP    100
 #define SC_Connect      101

@@ -568,7 +568,7 @@ void ExceptionHandler(ExceptionType which)
 			ASSERTNOTREACHED();
 			break;
 		}
-		
+
 		case SC_PrintChar:
 		{
 			// Lấy tham số cần in từ thanh ghi r4
@@ -608,7 +608,7 @@ void ExceptionHandler(ExceptionType which)
 			ASSERTNOTREACHED();
 			break;
 		}
-		
+
 		case SC_PrintString:
 		{
 			// Đọc địa chỉ string từ thanh ghi r4
@@ -627,7 +627,6 @@ void ExceptionHandler(ExceptionType which)
 			ASSERTNOTREACHED();
 			break;
 		}
-
 
 		case SC_Read:
 		{
@@ -853,6 +852,63 @@ void ExceptionHandler(ExceptionType which)
 			// copy memory from system space to user space and save to id buffer
 			System2User(idbuffer, len, buffer);
 			DEBUG(dbgSys, "Receive mess successfully!\n");
+
+			increaseProgramCounter();
+			return;
+			ASSERTNOTREACHED();
+		}
+
+		case SC_Exec:
+		{
+			DEBUG(dbgSys, "Syscall: Exec(filename)");
+
+			int addr = kernel->machine->ReadRegister(4);
+			DEBUG(dbgSys, "Register 4: " << addr);
+
+			char *fileName;
+			fileName = User2System(addr, 255);
+			DEBUG(dbgSys, "Read file name: " << fileName);
+
+			DEBUG(dbgSys, "Scheduling execution...");
+			int result = kernel->pTable->ExecuteUpdate(fileName);
+
+			DEBUG(dbgSys, "Writing result to register 2: " << result);
+			kernel->machine->WriteRegister(2, result);
+			delete fileName;
+
+			increaseProgramCounter();
+			return;
+			ASSERTNOTREACHED();
+		}
+
+		case SC_CreateSemaphore:
+		{
+			// Load name and value of semaphore
+			int virtAddr = kernel->machine->ReadRegister(4);	   // read name address from 4th register
+			int semVal = kernel->machine->ReadRegister(5);		   // read type from 5th register
+			char *name = User2System(virtAddr, MaxFileLength); // Copy semaphore name charArray form userSpace to systemSpace
+
+			// Validate name
+			if (name == NULL)
+			{
+				// DEBUG(dbgSynch, "\nNot enough memory in System");
+				cerr << "Not enough memory in System\n";
+				kernel->machine->WriteRegister(2, -1);
+				delete[] name;
+				return;
+			}
+
+			int res = kernel->sTable->Create(name, semVal);
+
+			// Check error
+			if (res == -1)
+			{
+				// DEBUG('a', "\nCan not create semaphore");
+				cerr << "Can not create semaphore" << endl;
+			}
+
+			delete[] name;
+			kernel->machine->WriteRegister(2, res);
 
 			increaseProgramCounter();
 			return;

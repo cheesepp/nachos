@@ -241,6 +241,14 @@ Receive:
 	syscall
 	j	$31
 	.end Receive
+
+	.globl CreateSemaphore
+	.ent   CreateSemaphore
+CreateSemaphore:
+	addiu $2,$0,SC_CreateSemaphore
+	syscall
+	j	$31
+	.end CreateSemaphore
 	
 /* dummy function to keep gcc happy */
         .globl  __main
