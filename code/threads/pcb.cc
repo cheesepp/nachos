@@ -41,9 +41,9 @@ PCB::PCB()
     this->numwait = 0;
     this->exitCode = 0;
     this->thread = NULL;
-    this->joinsemaphore = new Sem("joinsemaphore", 0);
-    this->exitsemaphore = new Sem("exitsemaphore", 0);
-    this->mutex = new Sem("mutex", 1);
+    this->joinsemaphore = new Semaphore("joinsemaphore", 0);
+    this->exitsemaphore = new Semaphore("exitsemaphore", 0);
+    this->mutex = new Semaphore("mutex", 1);
 }
 
 PCB::PCB(const char *fileName, Thread *thread) : PCB()
@@ -56,9 +56,9 @@ PCB::PCB(const char *fileName, Thread *thread) : PCB()
 PCB::PCB(int id)
 {
     this->pid = kernel->currentThread->pid;
-    this->joinsemaphore = new Sem("joinsem", 0);
-    this->exitsemaphore = new Sem("exitsem", 0);
-    this->mutex = new Sem("multex", 1);
+    this->joinsemaphore = new Semaphore("joinsem", 0);
+    this->exitsemaphore = new Semaphore("exitsem", 0);
+    this->mutex = new Semaphore("multex", 1);
 }
 
 PCB::~PCB()
@@ -110,21 +110,21 @@ void PCB::SetExitCode(int exitCode)
 
 void PCB::IncNumWait()
 {
-    this->mutex->wait();
+    this->mutex->P();
     this->numwait++;
-    this->mutex->signal();
+    this->mutex->V();
 }
 
 void PCB::DecNumWait()
 {
-    this->mutex->wait();
+    this->mutex->P();
     this->numwait--;
-    this->mutex->signal();
+    this->mutex->V();
 }
 
 int PCB::Exec(char *fileName, int pid)
 {
-    this->mutex->wait();
+    this->mutex->P();
     DEBUG(dbgThread, "PCB: Setting things up for " << fileName << "...");
 
     this->pid = pid;
@@ -137,26 +137,26 @@ int PCB::Exec(char *fileName, int pid)
     DEBUG(dbgThread, "PCB: Forking " << this->file << "...");
     this->thread = new Thread(this->file);
     this->thread->Fork(StartProcess, file);
-    this->mutex->signal();
+    this->mutex->V();
     return this->pid;
 }
 
 void PCB::JoinWait()
 {
-    this->joinsemaphore->wait();
+    this->joinsemaphore->P();
 }
 
 void PCB::ExitWait()
 {
-    this->exitsemaphore->signal();
+    this->exitsemaphore->P();
 }
 
 void PCB::JoinRelease()
 {
-    this->joinsemaphore->wait();
+    this->joinsemaphore->V();
 }
 
 void PCB::ExitRelease()
 {
-    this->exitsemaphore->signal();
+    this->exitsemaphore->V();
 }

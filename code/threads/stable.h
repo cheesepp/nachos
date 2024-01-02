@@ -6,7 +6,7 @@
 #include "bitmap.h"
 #include "sem.h"
 #define MAX_SEMAPHORE 10
-
+class Sem;
 //* Semaphore TABLE
 class STable
 {

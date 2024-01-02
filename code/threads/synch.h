@@ -18,9 +18,9 @@
 #define SYNCH_H
 
 #include "copyright.h"
+#include "main.h"
 #include "thread.h"
 #include "list.h"
-#include "main.h"
 
 // The following class defines a "semaphore" whose value is a non-negative
 // integer.  The semaphore has only two operations P() and V():
@@ -42,11 +42,12 @@ class Semaphore {
     Semaphore(char* debugName, int initialValue);	// set initial value
     ~Semaphore();   					// de-allocate semaphore
     char* getName() { return name;}			// debugging assist
-    
+
+    //* Down/Wait function -> P
     void P();	 	// these are the only operations on a semaphore
+    //* Up/Signal function -> V
     void V();	 	// they are both *atomic*
     void SelfTest();	// test routine for semaphore implementation
-    
   private:
     char* name;        // useful for debugging
     int value;         // semaphore value, always >= 0
@@ -75,8 +76,9 @@ class Lock {
     void Acquire(); 		// these are the only operations on a lock
     void Release(); 		// they are both *atomic*
 
-    bool IsHeldByCurrentThread() { 
-    		return lockHolder == kernel->currentThread; }
+    bool IsHeldByCurrentThread(Thread* currentThread) {
+
+    		return (lockHolder == currentThread)? true:false; }
     				// return true if the current thread 
 				// holds this lock.
     
