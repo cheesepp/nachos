@@ -915,6 +915,69 @@ void ExceptionHandler(ExceptionType which)
 			ASSERTNOTREACHED();
 		}
 
+		case SC_Signal:
+		{
+
+			// Load name of semaphore
+			int virtAddr = kernel->machine->ReadRegister(4);
+			char *name = User2System(virtAddr, MaxFileNameLength + 1);
+
+			// Validate name
+			if(name == NULL)
+			{
+				DEBUG(dbgSynch, "\nNot enough memory in System");
+				kernel->machine->WriteRegister(2, -1);
+				delete[] name;
+				return;
+			}
+			
+			int res = kernel->sTable->Signal(name);
+
+			// Check error
+			if(res == -1)
+			{
+				DEBUG(dbgSynch, "\nNot exists semaphore");
+			}
+			
+			delete[] name;
+			kernel->machine->WriteRegister(2, res);
+
+			increaseProgramCounter();
+			return;
+			ASSERTNOTREACHED();
+		}
+
+		case SC_Wait:
+		{
+
+			// Load name of semaphore
+			int virtAddr = kernel->machine->ReadRegister(4);
+			char *name = User2System(virtAddr, MaxFileNameLength + 1);
+
+			// Validate name
+			if(name == NULL)
+			{
+				DEBUG(dbgSynch, "\nNot enough memory in System");
+				kernel->machine->WriteRegister(2, -1);
+				delete[] name;
+				return;
+			}
+
+			int res = kernel->sTable->Wait(name);
+			
+			// Check error
+			if(res == -1)
+			{
+				DEBUG(dbgSynch, "\nNot exists semaphore");
+			}
+
+			delete[] name;
+			kernel->machine->WriteRegister(2, res);	
+			increaseProgramCounter();
+			return;
+			ASSERTNOTREACHED();
+		}
+
 		default:
 			cerr << "Unexpected system call " << type << "\n";
 			break;
