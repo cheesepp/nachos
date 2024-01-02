@@ -920,7 +920,7 @@ void ExceptionHandler(ExceptionType which)
 
 			// Load name of semaphore
 			int virtAddr = kernel->machine->ReadRegister(4);
-			char *name = User2System(virtAddr, MaxFileNameLength + 1);
+			char *name = User2System(virtAddr, MaxFileLength + 1);
 
 			// Validate name
 			if(name == NULL)
@@ -952,7 +952,7 @@ void ExceptionHandler(ExceptionType which)
 
 			// Load name of semaphore
 			int virtAddr = kernel->machine->ReadRegister(4);
-			char *name = User2System(virtAddr, MaxFileNameLength + 1);
+			char *name = User2System(virtAddr, MaxFileLength + 1);
 
 			// Validate name
 			if(name == NULL)
