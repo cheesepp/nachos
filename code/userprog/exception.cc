@@ -436,6 +436,26 @@ void ExceptionHandler(ExceptionType which)
 
 			return;
 
+		case SC_Join:
+		{
+			DEBUG(dbgSys, "Go sc join");
+			int id = kernel->pTable->JoinUpdate(id);
+			int result = kernel->pTable->JoinUpdate(id);
+			kernel->machine->WriteRegister(2,result);
+			increaseProgramCounter();
+			return;
+		}
+			
+		case SC_Exit:
+		{
+			DEBUG(dbgSys, "Go sc exit");
+			int exitCode = kernel->machine->ReadRegister(4);
+			int result = kernel->pTable->ExitUpdate(exitCode);
+			increaseProgramCounter();
+			return;
+
+		}
+			
 		case SC_Create:
 		{
 			// get address and file name
