@@ -4,18 +4,20 @@
  *     Basically, we only know about three types of segments:
  *	code (read-only), initialized data, and unitialized data
  */
+#ifndef NOFF_H
+#define NOFF_H
 
 #define NOFFMAGIC	0xbadfad 	/* magic number denoting Nachos 
 					 * object code file 
 					 */
 
-typedef struct segment {
+struct Segment {
   int virtualAddr;		/* location of segment in virt addr space */
   int inFileAddr;		/* location of segment in this file */
   int size;			/* size of segment */
-} Segment;
+};
 
-typedef struct noffHeader {
+struct NoffHeader {
    int noffMagic;		/* should be NOFFMAGIC */
    Segment code;		/* executable code segment */ 
    Segment initData;		/* initialized data segment */
@@ -25,4 +27,6 @@ typedef struct noffHeader {
    Segment uninitData;		/* uninitialized data segment --
 				 * should be zero'ed before use 
 				 */
-} NoffHeader;
+};
+
+#endif

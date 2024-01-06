@@ -8,8 +8,8 @@
 #include "synch.h"
 #include "thread.h"
 #include "bitmap.h"
-#include "sem.h"
 
+class Semaphore;
 // The process control block
 //
 //-> Store and manage information necessary to execute and join
@@ -29,11 +29,11 @@ class PCB
 
 private:
     //* Semaphore to use for controlling join process
-    Sem *joinsemaphore;
+    Semaphore *joinsemaphore;
     //* Semaphore to use for controlling exit process
-    Sem *exitsemaphore;
+    Semaphore *exitsemaphore;
     //* exclusive access semaphore
-    Sem *mutex;
+    Semaphore *mutex;
     //* Process ID
     int pid; 
 

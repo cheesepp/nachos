@@ -4,13 +4,14 @@
 #include "main.h"
 #include "pcb.h"
 #include "synch.h"
-#include "sem.h"
+#include "thread.h"
 #include "bitmap.h"
 
 #include <stdio.h>
 
 #define MAX_PROCESS 10
 
+class Semaphore;
 class PCB;
 
 // Process Table
@@ -24,7 +25,7 @@ private:
     // Manages free slots in the PCBs table
     Bitmap *reception;
     // Semaphore
-    Sem *semaphore;
+    Semaphore *semaphore;
     
 public:
     // Initializes process table with `size` entries

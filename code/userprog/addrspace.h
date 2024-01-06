@@ -15,6 +15,14 @@
 
 #include "copyright.h"
 #include "filesys.h"
+#include "machine.h"
+#include "translate.h"
+
+#ifndef CALLNOFF
+#define CALLNOFF
+
+#include "noff.h"
+#endif
 
 #define UserStackSize		1024 	// increase this as necessary!
 

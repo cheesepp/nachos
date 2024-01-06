@@ -5,7 +5,7 @@ PTable::PTable()
 {
     totalProcesses = MAX_PROCESS;
     reception = new Bitmap(totalProcesses);
-    semaphore = new Sem("PTable_bmsem", 1);
+    semaphore = new Semaphore("PTable_bmsem", 1);
 
     for (int i = 0; i < MAX_PROCESS; ++i)
         blocks[i] = NULL;
@@ -20,7 +20,7 @@ PTable::PTable(int size)
 {
     totalProcesses = size;
     reception = new Bitmap(totalProcesses);
-    semaphore = new Sem("PTable_bmsem", 1);
+    semaphore = new Semaphore("PTable_bmsem", 1);
 
     for (int i = 0; i < totalProcesses; ++i)
         blocks[i] = NULL;
@@ -81,7 +81,7 @@ void PTable::Remove(int pid)
 
 int PTable::ExecuteUpdate(char *fileName)
 {
-    semaphore->wait();
+    semaphore->P();
     DEBUG(dbgThread, "PTable::ExecUpdate(\"" << fileName << "\")");
 
     // Avoid self-execution
@@ -90,7 +90,7 @@ int PTable::ExecuteUpdate(char *fileName)
     if (strcmp(blocks[currentThreadId]->GetExecutableFileName(), fileName) == 0)
     {
         cerr << "PTable: %s cannot execute itself.\n", fileName;
-        semaphore->signal();
+        semaphore->V();
         return -1;
     }
 
@@ -100,7 +100,7 @@ int PTable::ExecuteUpdate(char *fileName)
     if (slot == -1)
     {
         cerr << "PTable: Maximum number of processes reached.\n";
-        semaphore->signal();
+        semaphore->V();
         return -1;
     }
 
@@ -112,7 +112,7 @@ int PTable::ExecuteUpdate(char *fileName)
     DEBUG(dbgThread, "PTable: Schedul program for execution...");
 
     this->totalProcesses++;
-    this->semaphore->signal();
+    this->semaphore->V();
 
     // Return the PID of PCB->Exec if success, else return -1
     return this->blocks[slot]->Exec(fileName, slot);

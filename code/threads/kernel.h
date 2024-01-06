@@ -28,11 +28,8 @@ class SynchConsoleInput;
 class SynchConsoleOutput;
 class SynchDisk;
 class Semaphore;
-
-Semaphore *addrLock;
-Bitmap *gPhysPageBitMap;
-STable *semTab;
-PTable *pTab;
+class STable;
+class PTable;
 
 class Kernel
 {
