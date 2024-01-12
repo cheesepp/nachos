@@ -12,10 +12,11 @@ static void StartProcess(void *args)
     int id;
     id = *((int *)args);
     // Get the fileName of this process id
-	DEBUG(dbgSys, "Start process:");
+	DEBUG(dbgSys, "1 Start process:");
     char *fileName = new char[20];
+    DEBUG(dbgSys, "2 Start process:");
     strcpy(fileName, kernel->pTable->GetFileName(id));
-	DEBUG(dbgSys, "Start process:" << fileName);
+	DEBUG(dbgSys, "3 Start process:" << fileName);
 
 
     AddrSpace *addrspace;
@@ -39,6 +40,7 @@ static void StartProcess(void *args)
 
 PCB::PCB()
 {
+    DEBUG(dbgSys, "init pcb");
     this->pid = -1;
     this->parentID = -1;
     this->file = NULL;
@@ -52,6 +54,7 @@ PCB::PCB()
 
 PCB::PCB(const char *fileName, Thread *thread) : PCB()
 {
+    DEBUG(dbgSys, "init pcb -file,thread");
     this->pid = 0;
     strcpy(this->file, fileName);
     this->thread = thread;
@@ -59,6 +62,7 @@ PCB::PCB(const char *fileName, Thread *thread) : PCB()
 
 PCB::PCB(int id)
 {
+    DEBUG(dbgSys, "init pcb -id");
     this->pid = kernel->currentThread->pid;
     this->joinsemaphore = new Semaphore("joinsem", 0);
     this->exitsemaphore = new Semaphore("exitsem", 0);
@@ -90,6 +94,10 @@ int PCB::GetID()
 const char *PCB::GetExecutableFileName() // -> Lay file name
 {
     DEBUG(dbgSys, "check file" << this->parentID);
+    if (this->file == NULL) {
+        DEBUG(dbgSys, "File is NULL");
+        return NULL;
+    }
     return this->file;
 }
 
@@ -111,6 +119,11 @@ int PCB::GetExitCode()
 void PCB::SetExitCode(int exitCode)
 {
     this->exitCode = exitCode;
+}
+
+void PCB::SetFile(char* filename)
+{
+    this->file = filename;
 }
 
 void PCB::IncNumWait()
@@ -139,7 +152,7 @@ int PCB::Exec(char *fileName, int pid)
     this->file = new char[strlen(fileName)];
     strcpy(this->file, fileName);
 
-    DEBUG(dbgThread, "PCB: Forking " << this->file << "...");
+    DEBUG(dbgSys, "PCB: Forking " << this->file << "...");
     this->thread = new Thread(this->file);
     this->thread->Fork(StartProcess, file);
     this->mutex->V();

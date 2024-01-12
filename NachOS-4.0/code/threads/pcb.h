@@ -99,6 +99,9 @@ public:
     void SetExitCode(int exitCode);
 
     int GetExitCode();
+
+    void SetFile(char* file);
+    
 };
 
 #endif // PCB_H

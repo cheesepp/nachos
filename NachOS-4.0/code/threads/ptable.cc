@@ -3,7 +3,7 @@
 
 PTable::PTable()
 {
-    
+
     totalProcesses = MAX_PROCESS;
     reception = new Bitmap(totalProcesses);
     semaphore = new Semaphore("PTable_bmsem", 1);
@@ -15,7 +15,8 @@ PTable::PTable()
     // -> (start up process, run automatically by Nachos)
     blocks[0] = new PCB(0);
     blocks[0]->parentID = -1;
-	DEBUG(dbgSys, "go constructerr");
+    blocks[0]->SetFile("./test/shell");
+    DEBUG(dbgSys, "go constructerr");
 }
 
 PTable::PTable(int size)
@@ -44,13 +45,12 @@ PTable::~PTable()
         if (!blocks[i])
             delete blocks[i];
     }
-	DEBUG(dbgSys, "go destructor");
-
+    DEBUG(dbgSys, "go destructor");
 }
 
 int PTable::GetCurrentThreadId()
 {
-    DEBUG(dbgSys, "thread checking...." <<  kernel->currentThread);
+    DEBUG(dbgSys, "thread checking...." << kernel->currentThread);
     DEBUG(dbgSys, "PTable: Current thread name " << kernel->currentThread->getName());
     Thread *current = kernel->currentThread;
     if (current != NULL)
@@ -95,7 +95,25 @@ int PTable::ExecuteUpdate(char *fileName)
     // Avoid self-execution
     DEBUG(dbgSys, "PTable: Checking " << fileName << " for self-execution...");
     int currentThreadId = GetCurrentThreadId();
-    DEBUG(dbgSys, "block(\"" << blocks[currentThreadId]->GetExecutableFileName()<< "\")");
+
+    // Add checks here
+    if (currentThreadId < 0 || currentThreadId >= MAX_PROCESS)
+    {
+        DEBUG(dbgSys, "Invalid thread ID");
+        semaphore->V();
+        return -1;
+    }
+
+    if (blocks[currentThreadId] == NULL)
+    {
+        DEBUG(dbgSys, "Block at current thread ID is NULL");
+        semaphore->V();
+        return -1;
+    }
+
+    DEBUG(dbgSys, "block " << blocks[currentThreadId]->GetThread());
+
+    DEBUG(dbgSys, "block(\"" << blocks[currentThreadId]->GetExecutableFileName() << "\")");
     if (strcmp(blocks[currentThreadId]->GetExecutableFileName(), fileName) == 0)
     {
         DEBUG(dbgSys, "PTable: %s cannot execute itself.");
@@ -115,7 +133,8 @@ int PTable::ExecuteUpdate(char *fileName)
     }
 
     // PID = slot number
-    this->blocks[slot] = new PCB();
+    this->blocks[slot] = new PCB(slot);
+    this->blocks[slot]->SetFile(fileName);
     this->blocks[slot]->parentID = currentThreadId;
 
     // Schedule the program for execution
