@@ -35,7 +35,10 @@
 #include "copyright.h"
 #include "synch.h"
 #include "main.h"
+<<<<<<< HEAD
 #include "debug.h"
+=======
+>>>>>>> origin/UU_sc
 
 //----------------------------------------------------------------------
 // Semaphore::Semaphore
@@ -75,8 +78,11 @@ Semaphore::~Semaphore()
 
 void Semaphore::P()
 {
+<<<<<<< HEAD
     DEBUG(dbgThread, "go here semaphore");
     
+=======
+>>>>>>> origin/UU_sc
     Interrupt *interrupt = kernel->interrupt;
     Thread *currentThread = kernel->currentThread;
 

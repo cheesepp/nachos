@@ -436,6 +436,26 @@ void ExceptionHandler(ExceptionType which)
 
 			return;
 
+		case SC_Join:
+		{
+			DEBUG(dbgSys, "Go sc join");
+			int id = kernel->pTable->JoinUpdate(id);
+			int result = kernel->pTable->JoinUpdate(id);
+			kernel->machine->WriteRegister(2,result);
+			increaseProgramCounter();
+			return;
+		}
+			
+		case SC_Exit:
+		{
+			DEBUG(dbgSys, "Go sc exit");
+			int exitCode = kernel->machine->ReadRegister(4);
+			int result = kernel->pTable->ExitUpdate(exitCode);
+			increaseProgramCounter();
+			return;
+
+		}
+			
 		case SC_Create:
 		{
 			// get address and file name
@@ -816,7 +836,7 @@ void ExceptionHandler(ExceptionType which)
 		case SC_Send:
 		{
 			DEBUG(dbgSys, "Send message socket!\n");
-			int addrSocketid      = kernel->machine->ReadRegister(4);
+			int addrSocketid = kernel->machine->ReadRegister(4);
 			int idbuffer = kernel->machine->ReadRegister(5);
 			int len = kernel->machine->ReadRegister(6);
 
@@ -861,6 +881,7 @@ void ExceptionHandler(ExceptionType which)
 		case SC_Exec:
 		{
 			DEBUG(dbgSys, "go exec");
+			DEBUG(dbgSys, "Syscall: Exec(filename)");
 
 			int addr = kernel->machine->ReadRegister(4);
 			DEBUG(dbgSys, "Register 4: " << addr);
@@ -910,6 +931,69 @@ void ExceptionHandler(ExceptionType which)
 			delete[] name;
 			kernel->machine->WriteRegister(2, res);
 
+			increaseProgramCounter();
+			return;
+			ASSERTNOTREACHED();
+		}
+
+		case SC_Signal:
+		{
+
+			// Load name of semaphore
+			int virtAddr = kernel->machine->ReadRegister(4);
+			char *name = User2System(virtAddr, MaxFileLength + 1);
+
+			// Validate name
+			if(name == NULL)
+			{
+				DEBUG(dbgSynch, "\nNot enough memory in System");
+				kernel->machine->WriteRegister(2, -1);
+				delete[] name;
+				return;
+			}
+			
+			int res = kernel->sTable->Signal(name);
+
+			// Check error
+			if(res == -1)
+			{
+				DEBUG(dbgSynch, "\nNot exists semaphore");
+			}
+			
+			delete[] name;
+			kernel->machine->WriteRegister(2, res);
+
+			increaseProgramCounter();
+			return;
+			ASSERTNOTREACHED();
+		}
+
+		case SC_Wait:
+		{
+
+			// Load name of semaphore
+			int virtAddr = kernel->machine->ReadRegister(4);
+			char *name = User2System(virtAddr, MaxFileLength + 1);
+
+			// Validate name
+			if(name == NULL)
+			{
+				DEBUG(dbgSynch, "\nNot enough memory in System");
+				kernel->machine->WriteRegister(2, -1);
+				delete[] name;
+				return;
+			}
+
+			int res = kernel->sTable->Wait(name);
+			
+			// Check error
+			if(res == -1)
+			{
+				DEBUG(dbgSynch, "\nNot exists semaphore");
+			}
+
+			delete[] name;
+			kernel->machine->WriteRegister(2, res);	
 			increaseProgramCounter();
 			return;
 			ASSERTNOTREACHED();

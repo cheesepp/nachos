@@ -44,6 +44,9 @@
 #define SC_ReadString 206
 #define SC_PrintString 207
 #define SC_CreateSemaphore 208
+#define SC_Signal 209
+#define SC_Wait 210
+
 
 #define SC_SocketTCP    100
 #define SC_Connect      101
@@ -185,6 +188,10 @@ int Seek(int position, OpenFileId id);
  * Return 1 on success, negative error code on failure
  */
 int Close(OpenFileId id);
+
+int Signal(char* name);
+
+int Wait(char* name);
 
 
 /* User-level thread operations: Fork and Yield.  To allow multiple

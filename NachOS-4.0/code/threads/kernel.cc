@@ -101,12 +101,15 @@ Kernel::Initialize()
     synchConsoleIn = new SynchConsoleInput(consoleIn); // input from stdin
     synchConsoleOut = new SynchConsoleOutput(consoleOut); // output to stdout
     synchDisk = new SynchDisk();    //
+<<<<<<< HEAD
 
     // -> For NACHOS_P2
     physPageBitMap = new Bitmap(NumPhysPages); // -> The number of physical pages: 128
     addrLock = new Semaphore("addrLock", 1); // -> ???
     pTable = new PTable();
     sTable = new STable();
+=======
+>>>>>>> origin/UU_sc
 #ifdef FILESYS_STUB
     fileSystem = new FileSystem();
 #else
