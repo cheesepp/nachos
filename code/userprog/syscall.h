@@ -126,6 +126,10 @@ SpaceId ExecV(int argc, char* argv[]);
  * Return the exit status.
  */
 int Join(SpaceId id); 	
+
+int Wait(char* name);
+
+int Signal(char* name);
  
 
 /* File system operations: Create, Remove, Open, Read, Write, Close

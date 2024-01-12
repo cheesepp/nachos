@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 
-#define MAX_PROCESS 10
+#define MAX_PROCESS 10 // so luong process toi da cho phep Nachos chay khi da chuonng
 
 class Semaphore;
 class PCB;

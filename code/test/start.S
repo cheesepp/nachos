@@ -90,6 +90,22 @@ Join:
 	j	$31
 	.end Join
 
+	.globl Wait
+	.ent	Wait
+Wait:
+	addiu $2,$0,SC_Wait
+	syscall
+	j	$31
+	.end Wait
+
+	.globl Signal
+	.ent	Signal
+Signal:
+	addiu $2,$0,SC_Signal
+	syscall
+	j	$31
+	.end Signal
+
 	.globl Create
 	.ent	Create
 Create:

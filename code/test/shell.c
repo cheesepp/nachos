@@ -1,11 +1,14 @@
 #include "syscall.h"
+#define SysConsoleInput	0  
+#define SysConsoleOutput	1  
+typedef int OpenFileId;
+typedef int SpaceId;
 
-int
-main()
+int main()
 {
     SpaceId newProc;
-    OpenFileId input = ConsoleInput;
-    OpenFileId output = ConsoleOutput;
+    OpenFileId input = SysConsoleInput;
+    OpenFileId output = SysConsoleOutput;
     char prompt[2], ch, buffer[60];
     int i;
 
@@ -14,22 +17,24 @@ main()
 
     while( 1 )
     {
-	Write(prompt, 2, output);
+	    Write(prompt, 2, output);
 
-	i = 0;
+	    i = 0;
 	
-	do {
-	
-	    Read(&buffer[i], 1, input); 
+    	do {
+            
+	        Read(&buffer[i], 1, input); 
 
-	} while( buffer[i++] != '\n' );
+	    } while( buffer[i++] != '\n' );
 
-	buffer[--i] = '\0';
+	    buffer[--i] = '\0';
 
-	if( i > 0 ) {
-		newProc = Exec(buffer);
-		Join(newProc);
-	}
+	    if( i > 0 ) {
+		    newProc = Exec(buffer);
+		    Join(newProc);
+	    }
     }
+
+    Halt();
 }
 
