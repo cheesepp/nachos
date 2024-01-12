@@ -6,7 +6,8 @@
         "sstream": "cpp",
         "syscall.h": "c",
         "iostream": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "unistd.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }
