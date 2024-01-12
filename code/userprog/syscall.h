@@ -44,6 +44,12 @@
 #define SC_ReadString 206
 #define SC_PrintString 207
 #define SC_CreateSemaphore 208
+<<<<<<< HEAD
+=======
+#define SC_Signal 209
+#define SC_Wait 210
+
+>>>>>>> origin/UU_sc
 
 #define SC_SocketTCP    100
 #define SC_Connect      101
