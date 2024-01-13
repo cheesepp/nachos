@@ -881,22 +881,33 @@ void ExceptionHandler(ExceptionType which)
 		case SC_Exec:
 		{
 			DEBUG(dbgSys, "go exec");
-			DEBUG(dbgSys, "Syscall: Exec(filename)");
 
 			int addr = kernel->machine->ReadRegister(4);
 			DEBUG(dbgSys, "Register 4: " << addr);
 
 			char *fileName;
 			fileName = User2System(addr, 255);
-			DEBUG(dbgSys, "Read file name: " << fileName);
-			DEBUG(dbgSys, "Scheduling execution..." << kernel->pTable);
-			DEBUG(dbgSys, "Scheduling execution...");
+			if (fileName == NULL){
+				DEBUG(dbgSys, "\n Not enough memory in System");
+				printf("\n Not enough memory in System");
+				kernel->machine->WriteRegister(2, -1);
+				//IncreasePC();
+				return;
+			}
+			OpenFile *ofile = kernel->fileSystem->Open(fileName);
+			if (ofile == NULL){
+				DEBUG(dbgSys, "Exec:: Can't open this file.");
+				kernel->machine->WriteRegister(2,-1);
+				increaseProgramCounter();
+				return;
+			}
+			delete ofile;
+
+			// return child process id 
 			int result = kernel->pTable->ExecuteUpdate(fileName);
-
-			DEBUG(dbgSys, "Writing result to register 2: " << result);
-			kernel->machine->WriteRegister(2, result);
-			delete fileName;
-
+			kernel->machine->WriteRegister(2,result);
+			delete[] fileName;
+			
 			increaseProgramCounter();
 			return;
 			ASSERTNOTREACHED();

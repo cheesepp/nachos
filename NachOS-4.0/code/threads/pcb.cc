@@ -7,6 +7,28 @@
 #include "pcb.h"
 #include "debug.h"
 // Entry point for executing processes
+void StartProcess_2(int id){
+    const char* fileName = kernel->pTable->GetFileName(id);
+
+    AddrSpace *space;
+    space = new AddrSpace((char*)fileName);
+
+    if (space == NULL){
+        DEBUG(dbgSys, "PCB::Exec: cant create AddSpace");
+        return;
+    }
+
+    kernel->currentThread->space = space;
+
+    space->InitRegisters();
+    space->RestoreState();
+
+    kernel->machine->Run();
+    ASSERT(FALSE);
+
+
+}
+
 static void StartProcess(void *args)
 {
     int id;
@@ -142,21 +164,39 @@ void PCB::DecNumWait()
 
 int PCB::Exec(char *fileName, int pid)
 {
-    this->mutex->P();
-    DEBUG(dbgThread, "PCB: Setting things up for " << fileName << "...");
+    DEBUG(dbgSys, "PCB: Exec " << fileName << "...");
+    // Gọi mutex->P(); để giúp tránh tình trạng nạp 2 tiến trình cùng 1 lúc.
+    mutex->P();
 
-    this->pid = pid;
+    // Kiểm tra thread đã khởi tạo thành công chưa, nếu chưa thì báo lỗi là không đủ bộ nhớ, gọi mutex->V() và return.             
+    this->thread = new Thread(fileName);
 
-    // Copy the executable file name into local storage, since `fileName`
-    // is going to be reused elsewhere
-    this->file = new char[strlen(fileName)];
-    strcpy(this->file, fileName);
+    if (this->thread == NULL){
+        DEBUG(dbgSys, "PCB::Exec: not enough mem  ");
+        mutex->V();
+        return -1;
+    }
+	//  Đặt processID của thread này là pid.
+    this->thread->pid = pid;
 
-    DEBUG(dbgSys, "PCB: Forking " << this->file << "...");
-    this->thread = new Thread(this->file);
-    this->thread->Fork(StartProcess, file);
-    this->mutex->V();
-    return this->pid;
+    this->parentID = kernel->currentThread->pid;
+
+    this->thread->Fork((VoidFunctionPtr) StartProcess_2,(void *)pid);
+    mutex->V();
+
+    return pid;
+
+
+    // // Copy the executable file name into local storage, since `fileName`
+    // // is going to be reused elsewhere
+    // this->file = new char[strlen(fileName)];
+    // strcpy(this->file, fileName);
+
+    // DEBUG(dbgSys, "PCB: Forking " << this->file << "...");
+    // this->thread = new Thread(this->file);
+    // this->thread->Fork(StartProcess, file);
+    // this->mutex->V();
+    // return this->pid;
 }
 
 void PCB::JoinWait()

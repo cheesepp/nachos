@@ -10,8 +10,8 @@ int main()
     SpaceId newProc1;
     SpaceId newProc2;
     
-    newProc1 = Exec("create");
-    newProc2 = Exec("add");
+    newProc1 = Exec("../test/create");
+    newProc2 = Exec("../test/add");
 
     Join(newProc1);
     Join(newProc2);

@@ -89,62 +89,97 @@ void PTable::Remove(int pid)
 int PTable::ExecuteUpdate(char *fileName)
 {
     DEBUG(dbgSys, "go here ptable");
+    //Gọi mutex->P(); để giúp tránh tình trạng nạp 2 tiến trình cùng 1 lúc.
     semaphore->P();
     DEBUG(dbgSys, "PTable::ExecUpdate(\"" << fileName << "\")");
 
-    // Avoid self-execution
-    DEBUG(dbgSys, "PTable: Checking " << fileName << " for self-execution...");
-    int currentThreadId = GetCurrentThreadId();
-
-    // Add checks here
-    if (currentThreadId < 0 || currentThreadId >= MAX_PROCESS)
-    {
-        DEBUG(dbgSys, "Invalid thread ID");
+    if (fileName == NULL){
+        DEBUG(dbgSys, "PTable::Exec : Can't not execute name is NULL.");
         semaphore->V();
         return -1;
     }
 
-    if (blocks[currentThreadId] == NULL)
-    {
-        DEBUG(dbgSys, "Block at current thread ID is NULL");
+    if (strcmp(fileName, "./test/scheduler") == 0 || strcmp(fileName,kernel->currentThread->getName()) == 0){
+        DEBUG(dbgSys, "PTable::Exec : Can't not execute itself.");
         semaphore->V();
         return -1;
     }
 
-    DEBUG(dbgSys, "block " << blocks[currentThreadId]->GetThread());
+    int index = this->GetFreeSlot();
 
-    DEBUG(dbgSys, "block(\"" << blocks[currentThreadId]->GetExecutableFileName() << "\")");
-    if (strcmp(blocks[currentThreadId]->GetExecutableFileName(), fileName) == 0)
-    {
-        DEBUG(dbgSys, "PTable: %s cannot execute itself.");
-        cerr << "PTable: %s cannot execute itself.\n", fileName;
+    if (index < 0){
+        DEBUG(dbgSys, "PTable::Exec : No free slot.");
         semaphore->V();
         return -1;
     }
 
-    // Allocate a new PCB
-    DEBUG(dbgSys, "PTable: Look for free slot in process table...");
-    int slot = GetFreeSlot();
-    if (slot == -1)
-    {
-        cerr << "PTable: Maximum number of processes reached.\n";
-        semaphore->V();
-        return -1;
-    }
+    //Nếu có slot trống thì khởi tạo một PCB mới với processID chính là index của slot này
+    blocks[index] = new PCB(index);
+    blocks[index]->SetFile(fileName);
 
-    // PID = slot number
-    this->blocks[slot] = new PCB(slot);
-    this->blocks[slot]->SetFile(fileName);
-    this->blocks[slot]->parentID = currentThreadId;
+	// parrentID là processID của currentThread
+    blocks[index]->parentID = kernel->currentThread->pid;
 
-    // Schedule the program for execution
-    DEBUG(dbgThread, "PTable: Schedul program for execution...");
+    // Gọi thực thi phương thức Exec của lớp PCB.
+	int pid = blocks[index]->Exec(fileName,index);
 
-    this->totalProcesses++;
-    this->semaphore->V();
+    semaphore->V();
 
-    // Return the PID of PCB->Exec if success, else return -1
-    return this->blocks[slot]->Exec(fileName, slot);
+    return pid;
+
+    // // Avoid self-execution
+    // DEBUG(dbgSys, "PTable: Checking " << fileName << " for self-execution...");
+    // int currentThreadId = GetCurrentThreadId();
+
+    // // Add checks here
+    // if (currentThreadId < 0 || currentThreadId >= MAX_PROCESS)
+    // {
+    //     DEBUG(dbgSys, "Invalid thread ID");
+    //     semaphore->V();
+    //     return -1;
+    // }
+
+    // if (blocks[currentThreadId] == NULL)
+    // {
+    //     DEBUG(dbgSys, "Block at current thread ID is NULL");
+    //     semaphore->V();
+    //     return -1;
+    // }
+
+    // DEBUG(dbgSys, "block " << blocks[currentThreadId]->GetThread());
+
+    // DEBUG(dbgSys, "block(\"" << blocks[currentThreadId]->GetExecutableFileName() << "\")");
+    // if (strcmp(blocks[currentThreadId]->GetExecutableFileName(), fileName) == 0)
+    // {
+    //     DEBUG(dbgSys, "PTable: %s cannot execute itself.");
+    //     cerr << "PTable: %s cannot execute itself.\n", fileName;
+    //     semaphore->V();
+    //     return -1;
+    // }
+
+    // // Allocate a new PCB
+    // DEBUG(dbgSys, "PTable: Look for free slot in process table...");
+    // int slot = GetFreeSlot();
+    // if (slot == -1)
+    // {
+    //     cerr << "PTable: Maximum number of processes reached.\n";
+    //     semaphore->V();
+    //     return -1;
+    // }
+
+    // // PID = slot number
+    // this->blocks[slot] = new PCB(slot);
+    // this->blocks[slot]->SetFile(fileName);
+    // this->blocks[slot]->parentID = currentThreadId;
+
+    // // Schedule the program for execution
+    // DEBUG(dbgThread, "PTable: Schedul program for execution...");
+
+    // this->totalProcesses++;
+    // this->semaphore->V();
+
+    // // Return the PID of PCB->Exec if success, else return -1
+    // return this->blocks[slot]->Exec(fileName, slot);
 }
 
 int PTable::JoinUpdate(int id)
