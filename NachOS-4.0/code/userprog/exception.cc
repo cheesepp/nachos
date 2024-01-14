@@ -322,7 +322,7 @@ int GetRandomNumber()
 char *ReadStringFromConsole(int len)
 {
 	char *str;
-	str = new char[len + 1];
+	str = new char[len];
 	for (int i = 0; i < len; ++i)
 	{
 		str[i] = kernel->synchConsoleIn->GetChar();
@@ -467,6 +467,7 @@ void ExceptionHandler(ExceptionType which)
 			virtAddr = kernel->machine->ReadRegister(4);
 			DEBUG(dbgSys, "\n Reading filename.");
 			// MaxFileLength = 32
+			// Hai thủ tục copy vùng nhớ từ User Space vào System Space và ngược lại
 			filename = User2System(virtAddr, MaxFileLength + 1);
 			if (filename == NULL)
 			{
@@ -881,7 +882,7 @@ void ExceptionHandler(ExceptionType which)
 		case SC_Exec:
 		{
 			DEBUG(dbgSys, "go exec");
-
+			// doc file name
 			int addr = kernel->machine->ReadRegister(4);
 			DEBUG(dbgSys, "Register 4: " << addr);
 

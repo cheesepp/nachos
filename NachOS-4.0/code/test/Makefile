@@ -112,7 +112,7 @@ ifeq ($(hosttype),unknown)
 PROGRAMS = unknownhost
 else
 # change this if you create a new test program!
-PROGRAMS = add halt shell matmult sort segments createfile openf cat echoclient fileclient copy concatenate delete ping pong scheduler
+PROGRAMS = add halt shell matmult sort segments createfile openf cat echoclient fileclient copy concatenate delete player_a player_b scheduler fixed_cat
 endif
 
 all: $(PROGRAMS)
@@ -133,17 +133,17 @@ add: add.o start.o
 	$(LD) $(LDFLAGS) start.o add.o -o add.coff
 	$(COFF2NOFF) add.coff add
 
-ping.o: ping.c
-	$(CC) $(CFLAGS) -c ping.c
-ping: ping.o start.o
-	$(LD) $(LDFLAGS) start.o ping.o -o ping.coff
-	$(COFF2NOFF) ping.coff ping
+player_a.o: player_a.c
+	$(CC) $(CFLAGS) -c player_a.c
+player_a: player_a.o start.o
+	$(LD) $(LDFLAGS) start.o player_a.o -o player_a.coff
+	$(COFF2NOFF) player_a.coff player_a
 
-pong.o: pong.c
-	$(CC) $(CFLAGS) -c pong.c
-pong: pong.o start.o
-	$(LD) $(LDFLAGS) start.o pong.o -o pong.coff
-	$(COFF2NOFF) pong.coff pong
+player_b.o: player_b.c
+	$(CC) $(CFLAGS) -c player_b.c
+player_b: player_b.o start.o
+	$(LD) $(LDFLAGS) start.o player_b.o -o player_b.coff
+	$(COFF2NOFF) player_b.coff player_b
 
 scheduler.o: scheduler.c
 	$(CC) $(CFLAGS) -c scheduler.c
@@ -192,6 +192,12 @@ cat.o: cat.c
 cat: cat.o start.o
 	$(LD) $(LDFLAGS) start.o cat.o -o cat.coff
 	$(COFF2NOFF) cat.coff cat
+
+fixed_cat.o: fixed_cat.c
+	$(CC) $(CFLAGS) -c fixed_cat.c
+fixed_cat: fixed_cat.o start.o
+	$(LD) $(LDFLAGS) start.o fixed_cat.o -o fixed_cat.coff
+	$(COFF2NOFF) fixed_cat.coff fixed_cat
 
 echoclient.o: echoclient.c
 	$(CC) $(CFLAGS) -c echoclient.c

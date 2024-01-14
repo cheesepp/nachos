@@ -193,6 +193,8 @@ int Signal(char* name);
 
 int Wait(char* name);
 
+int CreateSemaphore(char *name, int semval);
+
 
 /* User-level thread operations: Fork and Yield.  To allow multiple
  * threads to run within a user program. 

@@ -13,7 +13,7 @@ main()
   int result;
   
   result = Add(42, 23);
-
-  Halt();
+  PrintString(result);
+  // Halt();
   /* not reached */
 }

@@ -22,12 +22,7 @@ int main()
 
     // Đọc nội dung từ file
     result = Read(Content, 256, id1);
-    if (result == -1)
-    {
-        Write("Error reading from file 'text.txt'\n", len("Error reading from file 'text.txt'\n"), CONSOLE_OUTPUT);
-        Close(id1);
-        Halt();
-    }
+
 
     // Tạo socket
     SocketID1 = SocketTCP();

@@ -131,11 +131,14 @@ public:
 
     int connectSocket(char *ip, int port)
     {
-        // Create a new sockaddr_in struct to represent the remote host
+        // tạo biến sockaddr_in để đại diện cho remote host
         struct sockaddr_in remote_addr;
-        remote_addr.sin_family = AF_INET;            // Use IPv4 protocol
-        remote_addr.sin_port = htons(port);          // Convert port to network byte order
-        remote_addr.sin_addr.s_addr = inet_addr(ip); // Convert IP address to network byte order
+        // Use IPv4 protocol
+        remote_addr.sin_family = AF_INET;  
+        // Convert port to network byte order
+        remote_addr.sin_port = htons(port);        
+        // Convert IP address to network byte order  
+        remote_addr.sin_addr.s_addr = inet_addr(ip);
 
         // Try to connect to the remote host using the existing socket ID
         if (connect(this->mySocket.socketID, (struct sockaddr *)&remote_addr, sizeof(remote_addr)) < 0)
@@ -146,7 +149,8 @@ public:
         }
 
         cerr << "Connected successfully\n";
-        return this->mySocket.socketID; // Return socket file descriptor on success
+        // Return socket file descriptor on success
+        return this->mySocket.socketID; 
     }
 
     int ReadFile(char *buffer, int charCount)
@@ -159,8 +163,8 @@ public:
             return -1;
         }
         result = myFile.FilePointer->Read(buffer, charCount);
-        if (result < charCount)
-            return -2;
+        // if (result < charCount)
+        //     return -1;
 
         return result;
     }
@@ -181,10 +185,10 @@ public:
             return -1;
         }
         
-        result = this->myFile.FilePointer->WriteAt(buffer, charCount, myFile.FilePointer->Length() + 1);
+        result = this->myFile.FilePointer->WriteAt(buffer, charCount, myFile.FilePointer->Length());
 
-        if (result != charCount)
-            return -1;
+        // if (result != charCount)
+        //     return -1;
         return result;
     }
 
@@ -288,7 +292,8 @@ public:
                     this->table[i].openFile(name, type);
                 else
                     this->table[i].openSocket();
-
+                
+                // kiểm tra ID có lỗi hay không
                 if (this->table[i].getID() != -1)
                 {
                     currentSize++;

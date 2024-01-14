@@ -90,6 +90,7 @@ int PTable::ExecuteUpdate(char *fileName)
 {
     DEBUG(dbgSys, "go here ptable");
     //Gọi mutex->P(); để giúp tránh tình trạng nạp 2 tiến trình cùng 1 lúc.
+    // thực hiện thao tác chờ
     semaphore->P();
     DEBUG(dbgSys, "PTable::ExecUpdate(\"" << fileName << "\")");
 
@@ -115,123 +116,93 @@ int PTable::ExecuteUpdate(char *fileName)
 
     //Nếu có slot trống thì khởi tạo một PCB mới với processID chính là index của slot này
     blocks[index] = new PCB(index);
+    
+    // set file name cho block (mảng pcb)
     blocks[index]->SetFile(fileName);
 
 	// parrentID là processID của currentThread
     blocks[index]->parentID = kernel->currentThread->pid;
 
     // Gọi thực thi phương thức Exec của lớp PCB.
+    // tạo 1 thread mới có file name và process id 
 	int pid = blocks[index]->Exec(fileName,index);
 
+    // thực hiển giải phóng semaphore
     semaphore->V();
 
     return pid;
 
-    // // Avoid self-execution
-    // DEBUG(dbgSys, "PTable: Checking " << fileName << " for self-execution...");
-    // int currentThreadId = GetCurrentThreadId();
-
-    // // Add checks here
-    // if (currentThreadId < 0 || currentThreadId >= MAX_PROCESS)
-    // {
-    //     DEBUG(dbgSys, "Invalid thread ID");
-    //     semaphore->V();
-    //     return -1;
-    // }
-
-    // if (blocks[currentThreadId] == NULL)
-    // {
-    //     DEBUG(dbgSys, "Block at current thread ID is NULL");
-    //     semaphore->V();
-    //     return -1;
-    // }
-
-    // DEBUG(dbgSys, "block " << blocks[currentThreadId]->GetThread());
-
-    // DEBUG(dbgSys, "block(\"" << blocks[currentThreadId]->GetExecutableFileName() << "\")");
-    // if (strcmp(blocks[currentThreadId]->GetExecutableFileName(), fileName) == 0)
-    // {
-    //     DEBUG(dbgSys, "PTable: %s cannot execute itself.");
-    //     cerr << "PTable: %s cannot execute itself.\n", fileName;
-    //     semaphore->V();
-    //     return -1;
-    // }
-
-    // // Allocate a new PCB
-    // DEBUG(dbgSys, "PTable: Look for free slot in process table...");
-    // int slot = GetFreeSlot();
-    // if (slot == -1)
-    // {
-    //     cerr << "PTable: Maximum number of processes reached.\n";
-    //     semaphore->V();
-    //     return -1;
-    // }
-
-    // // PID = slot number
-    // this->blocks[slot] = new PCB(slot);
-    // this->blocks[slot]->SetFile(fileName);
-    // this->blocks[slot]->parentID = currentThreadId;
-
-    // // Schedule the program for execution
-    // DEBUG(dbgThread, "PTable: Schedul program for execution...");
-
-    // this->totalProcesses++;
-    // this->semaphore->V();
-
-    // // Return the PID of PCB->Exec if success, else return -1
-    // return this->blocks[slot]->Exec(fileName, slot);
 }
 
 int PTable::JoinUpdate(int id)
 {
-    int currentThreadId = GetCurrentThreadId();
-    if (!IsExist(id))
-    {
-        cerr << "PTable: Join into an invalid process\n";
-        return -1;
-    }
+    DEBUG(dbgSys, "PTable::joinupdate: go here");
 
-    if (id == currentThreadId)
-    {
-        cerr << "PTable: Process with id " << currentThreadId << " cannot join to itself\n";
-        return -2;
-    }
+	// có processID là id hay không. Nếu không thỏa, ta báo lỗi hợp lý và trả về -1.
+	if(id < 0)
+	{
+        DEBUG(dbgSys, "PTable::joinupdate: id="<<id);
+		return -1;
+	}
 
-    if (blocks[id]->parentID != currentThreadId)
-    {
-        cerr << "PTable: Can only join parent to child process \n";
-        return -3;
-    }
+	// Check if process running is parent process of process which joins
+    DEBUG(dbgSys, "PTable::joinupdate: check procces id of currentThread = "<< kernel->currentThread->pid);
+    DEBUG(dbgSys, "PTable::joinupdate: check id = "<< id);
+    DEBUG(dbgSys, "PTable::joinupdate: check parrent id of block = "<< blocks[id]->parentID);
 
-    // Increment numwait and call JoinWait() to wait for the child process to complete.
-    blocks[currentThreadId]->IncNumWait();
-    blocks[id]->JoinWait();
+    // Ta kiểm tra tính hợp lệ của processID id và kiểm tra tiến trình gọi Join có phải là cha của tiến trình
+	if(kernel->currentThread->pid != blocks[id]->parentID)
+	{
+        DEBUG(dbgSys, "PTable::joinupdate: cant join in process which is not its parent process"<<id);
+		return -1;
+	}
 
-    // After the child process is complete, the process is released.
-    blocks[id]->ExitRelease();
+    // tăng số tiến trình chờ bằng IncNumWait
+	blocks[blocks[id]->parentID]->IncNumWait();
+	
 
-    return blocks[id]->GetExitCode();
+	//pcb[id]->boolBG = 1;
+    
+    // tiến trình cha đợi tiến trình con kết thúc
+	blocks[id]->JoinWait();
+
+	// Xử lý exitcode.	
+	int ec = blocks[id]->GetExitCode();
+
+    // cho phép tiến trình con kết thúc
+	blocks[id]->ExitRelease();
+
+    // Successfully
+	return ec;
 }
 
 int PTable::ExitUpdate(int exitcode)
 {
-    int currentThreadId = GetCurrentThreadId();
-    if (currentThreadId == 0)
-    {
+    // lấy process id của tiến trình gọi
+    int id = kernel->currentThread->pid;
+
+    // nếu tiến trình gọi làm main process thì halt()
+    if (id == 0){
         kernel->currentThread->FreeSpace();
         kernel->interrupt->Halt();
         return 0;
     }
-    if (!IsExist(currentThreadId))
-    {
-        DEBUG(dbgSys, "Process " << currentThreadId << " is not exist.");
+    if (IsExist(id) == false){
         return -1;
     }
+    
+    // nếu không phải tiến trình main process gọi
+    // setexitcode để đặt exitcode cho tiến trình gọi
+    blocks[id]->SetExitCode(exitcode);
+    blocks[blocks[id]->parentID]->DecNumWait();
 
-    blocks[currentThreadId]->SetExitCode(exitcode);
-    blocks[currentThreadId]->JoinRelease();
-    blocks[currentThreadId]->ExitWait();
-    Remove(currentThreadId);
+    // gọi join release để giải phóng tiến trình cha đang đợi
+    blocks[id]->JoinRelease();
+    // gọi exitwait để xin tiến trình cha cho phép thoát
+    blocks[id]->ExitWait();
+
+    Remove(id);
+    return exitcode;
 }
 
 const char *PTable::GetFileName(int id)

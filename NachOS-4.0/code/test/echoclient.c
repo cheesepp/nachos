@@ -72,7 +72,7 @@ int main()
     Receive(SocketID1, Content1, len(Content1));
     Write(Content1, len(Content1), CONSOLE_OUTPUT);
     Send(SocketID1, ByeContent, len(ByeContent));
-    closeResult1 = Close(SocketID1);
+    // closeResult1 = Close(SocketID1);
     if (closeResult1 == -1)
     {
         Write("Error closing SocketID1\n", len("Error closing SocketID1\n"), CONSOLE_OUTPUT);
@@ -82,7 +82,7 @@ int main()
     Receive(SocketID2, Content2, len(Content2));
     Write(Content2, len(Content2), CONSOLE_OUTPUT);
     Send(SocketID2, ByeContent, len(ByeContent));
-    closeResult2 = Close(SocketID2);
+    // closeResult2 = Close(SocketID2);
     if (closeResult2 == -1)
     {
         Write("Error closing SocketID2\n", len("Error closing SocketID2\n"), CONSOLE_OUTPUT);
@@ -92,7 +92,7 @@ int main()
     Receive(SocketID3, Content3, len(Content3));
     Write(Content3, len(Content3), CONSOLE_OUTPUT);
     Send(SocketID3, ByeContent, len(ByeContent));
-    closeResult3 = Close(SocketID3);
+    // closeResult3 = Close(SocketID3);
     if (closeResult3 == -1)
     {
         Write("Error closing SocketID3\n", len("Error closing SocketID3\n"), CONSOLE_OUTPUT);
@@ -102,7 +102,7 @@ int main()
     Receive(SocketID4, Content4, len(Content4));
     Write(Content4, len(Content4), CONSOLE_OUTPUT);
     Send(SocketID4, ByeContent, len(ByeContent));
-    closeResult4 = Close(SocketID4);
+    // closeResult4 = Close(SocketID4);
     if (closeResult4 == -1)
     {
         Write("Error closing SocketID4\n", len("Error closing SocketID4\n"), CONSOLE_OUTPUT);

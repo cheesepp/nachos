@@ -71,7 +71,7 @@ int STable::Wait(char *name)
             }
         }
     }
-    cerr <<"Semaphore not found.\n";
+    // cerr <<"A";
     return -1;
 }
 
@@ -81,7 +81,7 @@ int STable::Signal(char *name)
     for (int i = 0; i < MAX_SEMAPHORE; i++)
     {
         // Check does slot[i] load MySemaphore
-        if (!this->map->Test(i))
+        if (this->map->Test(i))
         {
             // if yes then compare nam with name of MySemaphore in table
             if (strcmp(name, table[i]->GetName()) == 0)
